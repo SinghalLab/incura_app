@@ -72,9 +72,9 @@ with st.spinner("Loading TFBS matrix..."):
 use_example = st.button("▶️ Run Example")
 
 if use_example:
-    with open("data/example_genes.txt") as f:
+    with open("data/DEGs_ko.txt") as f:
         rows_text = f.read()
-    with open("data/example_tfs.txt") as f:
+    with open("data/genes.txt") as f:
         cols_text = f.read()
 else:
     # --- Gene Input ---
