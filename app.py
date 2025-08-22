@@ -65,22 +65,44 @@ def load_preprocessed_matrix(species: str) -> pd.DataFrame:
 
 with st.spinner("Loading TFBS matrix..."):
     matrix = load_preprocessed_matrix(dataset_choice)
+    
+# -------------------------------
+# Example run button
+# -------------------------------
+use_example = st.button("▶️ Run Example")
 
-# --- Gene Input ---
-st.subheader("Filtering for Differentially Expressed Genes")
-rows_text = st.text_area("Paste gene names here (one gene per line):", placeholder="Gene1\nGene2\nGene3")
+if use_example:
+    with open("data/example_genes.txt") as f:
+        rows_text = f.read()
+    with open("data/example_tfs.txt") as f:
+        cols_text = f.read()
+else:
+    # --- Gene Input ---
+    st.subheader("Filtering for Differentially Expressed Genes")
+    rows_text = st.text_area(
+        "Paste gene names here (one gene per line):", 
+        placeholder="Gene1\nGene2\nGene3"
+    )
+
+    # --- TF Input ---
+    st.subheader("Filtering for Transcription Factors")
+    cols_text = st.text_area(
+        "Paste TF names here (or all expressed genes, one per line):", 
+        placeholder="TF1\nTF2\nTF3"
+    )
+
+# Standardize parsing of input
 row_list_raw = [x.strip() for x in rows_text.replace(',', '\n').splitlines() if x.strip()]
 row_list = [x.lower() for x in row_list_raw]
 valid_rows = [r for r in row_list if r in matrix.index]
-st.markdown(f"**Genes pasted:** {len(row_list_raw)} &nbsp;&nbsp;|&nbsp;&nbsp; **Valid genes:** {len(valid_rows)}")
 
-# --- TF Input ---
-st.subheader("Filtering for Transcription Factors")
-cols_text = st.text_area("Paste TF names here (or all expressed genes, one per line):", placeholder="TF1\nTF2\nTF3")
 col_list_raw = [x.strip() for x in cols_text.replace(',', '\n').splitlines() if x.strip()]
 col_list = [x.lower() for x in col_list_raw]
 valid_cols = [c for c in col_list if c in matrix.columns]
+
+st.markdown(f"**Genes pasted:** {len(row_list_raw)} &nbsp;&nbsp;|&nbsp;&nbsp; **Valid genes:** {len(valid_rows)}")
 st.markdown(f"**TFs pasted:** {len(col_list_raw)} &nbsp;&nbsp;|&nbsp;&nbsp; **Valid TFs:** {len(valid_cols)}")
+
 
 # ---------------------------------
 # TF enrichment 
