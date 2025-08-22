@@ -159,13 +159,24 @@ if valid_rows and valid_cols:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
         cluster_labels = kmeans.fit_predict(count_matrix.values)
 
-        # --- Plot UMAP with Clusters ---
+        # --- UMAP with Clusters ---
         fig, ax = plt.subplots(figsize=(6, 4))
-        scatter = ax.scatter(embedding[:, 0], embedding[:, 1], c=cluster_labels, cmap='tab10', s=50)
+        scatter = ax.scatter(
+            embedding[:, 0], embedding[:, 1],
+            c=cluster_labels, cmap='tab10', s=50
+        )
+        
         ax.set_title("UMAP Projection with KMeans Clusters")
         ax.set_xlabel("UMAP 1")
         ax.set_ylabel("UMAP 2")
+        
+        # Add legend
+        handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
+        ax.legend(handles, [f"Cluster {i}" for i in range(n_clusters)],
+                  title="Clusters", bbox_to_anchor=(1.05, 1), loc="upper left")
+        
         st.pyplot(fig)
+
 
         # --- Show cluster assignments ---
         clustered_df = pd.DataFrame({
