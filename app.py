@@ -69,12 +69,20 @@ with st.spinner("Loading TFBS matrix..."):
 # -------------------------------
 # Example run button
 # -------------------------------
+# --- Keep example choice in session state ---
 if "use_example" not in st.session_state:
     st.session_state.use_example = False
 
+# Button sets the flag
 if st.button("▶️ Run Example"):
     st.session_state.use_example = True
 
+# Optional reset button
+if st.session_state.use_example:
+    if st.button("🔄 Reset to custom input"):
+        st.session_state.use_example = False
+
+# --- Use example or custom input ---
 if st.session_state.use_example:
     with open("data/DEGs_ko.txt") as f:
         rows_text = f.read()
@@ -94,6 +102,7 @@ else:
         "Paste TF names here (or all expressed genes, one per line):", 
         placeholder="TF1\nTF2\nTF3"
     )
+
 
 
 # Standardize parsing of input
