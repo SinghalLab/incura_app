@@ -69,9 +69,13 @@ with st.spinner("Loading TFBS matrix..."):
 # -------------------------------
 # Example run button
 # -------------------------------
-use_example = st.button("▶️ Run Example")
+if "use_example" not in st.session_state:
+    st.session_state.use_example = False
 
-if use_example:
+if st.button("▶️ Run Example"):
+    st.session_state.use_example = True
+
+if st.session_state.use_example:
     with open("data/DEGs_ko.txt") as f:
         rows_text = f.read()
     with open("data/genes.txt") as f:
@@ -90,6 +94,7 @@ else:
         "Paste TF names here (or all expressed genes, one per line):", 
         placeholder="TF1\nTF2\nTF3"
     )
+
 
 # Standardize parsing of input
 row_list_raw = [x.strip() for x in rows_text.replace(',', '\n').splitlines() if x.strip()]
