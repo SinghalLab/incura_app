@@ -169,9 +169,9 @@ if valid_rows and valid_cols:
         # --- Download filtered count matrix ---
         csv_matrix = count_matrix.to_csv(index=True).encode("utf-8")
         st.download_button(
-            label="📥 Download Filtered Count Matrix (CSV)",
+            label="📥 Download Matrix of Regulatory Profiles",
             data=csv_matrix,
-            file_name="incura_filtered_count_matrix.csv",
+            file_name="incura_matrix.csv",
             mime="text/csv"
         )
 
