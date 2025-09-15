@@ -161,17 +161,20 @@ if valid_rows and valid_cols:
     count_matrix = count_matrix.astype(np.float32)
     st.success(f"Filtered to matrix with shape: {count_matrix.shape}")
 
-    # --- Download filtered count matrix ---
-    csv_matrix = count_matrix.to_csv(index=True).encode("utf-8")
-    st.download_button(
-    label="📥 Download Filtered Count Matrix (CSV)",
-    data=csv_matrix,
-    file_name="incura_filtered_count_matrix.csv",
-    mime="text/csv")
 
     if count_matrix.empty:
         st.warning("No matching rows found after filtering. Check gene and TF names.")
     else:
+
+        # --- Download filtered count matrix ---
+        csv_matrix = count_matrix.to_csv(index=True).encode("utf-8")
+        st.download_button(
+            label="📥 Download Filtered Count Matrix (CSV)",
+            data=csv_matrix,
+            file_name="incura_filtered_count_matrix.csv",
+            mime="text/csv"
+        )
+
         # --- UMAP ---
         reducer = umap.UMAP(n_components=2, random_state=42)
         embedding = reducer.fit_transform(count_matrix.values)
