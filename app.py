@@ -28,7 +28,7 @@ with col2:
     "Paste a list of DEGs and either all expressed genes or a list of transcription factors of interest to explore regulatory modules, "
     "visualize gene clusters, and identify enriched TF binding sites.\n\n"
     "**Note:** This implementation of InCURA uses a pre-computed TF binding site matrix "
-    "with a fixed background model based on all protein coding genes in the respective organism. For more versatile functionality use the [GitHub version of InCURA](https://github.com/saezlab/incura)."
+    "with a fixed background model based on all protein coding genes in the respective organism. For more versatile functionality use the [GitHub version of InCURA](https://github.com/SinghalLab/incura)."
     )
 
 # -------------------------------
