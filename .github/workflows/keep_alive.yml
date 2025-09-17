@@ -3,9 +3,9 @@ name: Keep InCURA Alive (Weekdays)
 # NOTE: GitHub Actions cron uses UTC. See explanation below for timezone/DST.
 on:
   schedule:
-    - cron: '0 3 * * *'   # 05:00 UTC -> 09:00 Europe/Berlin (CEST = UTC+2)
-    - cron: '0 11 * * *'  # 13:00 UTC -> 13:00 Europe/Berlin (CEST)
-    - cron: '0 19 * * *'  # 21:00 UTC -> 17:00 Europe/Berlin (CEST)
+    - cron: '0 3 * * 1-5'   # 05:00 UTC -> 09:00 Europe/Berlin (CEST = UTC+2)
+    - cron: '0 11 * * 1-5'  # 13:00 UTC -> 13:00 Europe/Berlin (CEST)
+    - cron: '0 19 * * 1-5'  # 21:00 UTC -> 17:00 Europe/Berlin (CEST)
   workflow_dispatch:       # allows manual runs from the Actions tab
 
 # Ensure the workflow has permission to push commits
