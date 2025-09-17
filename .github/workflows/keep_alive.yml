@@ -1,0 +1,33 @@
+name: Keep InCURA Alive (Weekdays)
+
+# NOTE: GitHub Actions cron uses UTC. See explanation below for timezone/DST.
+on:
+  schedule:
+    - cron: '0 3 * * *'   # 05:00 UTC -> 09:00 Europe/Berlin (CEST = UTC+2)
+    - cron: '0 11 * * *'  # 13:00 UTC -> 13:00 Europe/Berlin (CEST)
+    - cron: '0 19 * * *'  # 21:00 UTC -> 17:00 Europe/Berlin (CEST)
+  workflow_dispatch:       # allows manual runs from the Actions tab
+
+# Ensure the workflow has permission to push commits
+permissions:
+  contents: write
+
+jobs:
+  empty-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # persist-credentials uses the provided GITHUB_TOKEN so git push should work
+          persist-credentials: true
+
+      - name: Create empty commit and push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          # create an empty commit (no files changed)
+          git commit --allow-empty -m "chore: empty commit to keep Streamlit app active [skip ci]"
+          git push
