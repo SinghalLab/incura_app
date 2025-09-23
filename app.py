@@ -231,20 +231,13 @@ if valid_rows and valid_cols:
             st.pyplot(fig_heat)
 
         # -------------------------------
-        # Compare Two Clusters (Volcano Plot)
+        # Volcano plot with dynamic top TF labels
         # -------------------------------
         
-        # Convert the filtered count matrix to binary (presence/absence of TFBS)
-        binary_matrix = count_matrix.astype(bool).astype(int)
-        
-        # Create a Pandas Series of cluster labels aligned to the binary_matrix
-        cluster_series = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
-
-
         st.subheader("Compare Two Clusters (Volcano Plot)")
         
         with st.expander("Select two clusters to compare"):
-            # Let user select two clusters
+            # Select clusters
             selected_clusters = st.multiselect(
                 "Select two clusters",
                 options=sorted(set(cluster_labels)),
@@ -254,16 +247,16 @@ if valid_rows and valid_cols:
             if len(selected_clusters) == 2:
                 clust1, clust2 = selected_clusters
         
-                # Filter genes in each cluster
+                # Filter genes
                 genes_clust1 = binary_matrix[cluster_series == clust1]
                 genes_clust2 = binary_matrix[cluster_series == clust2]
         
-                # Compute TFBS frequency (mean presence) in each cluster
+                # Compute TFBS frequency difference
                 freq1 = genes_clust1.mean()
                 freq2 = genes_clust2.mean()
                 diff = freq1 - freq2
         
-                # Compute p-values using Fisher exact test per TF
+                # Compute p-values
                 from scipy.stats import fisher_exact
                 pvals = []
                 for tf in binary_matrix.columns:
@@ -280,15 +273,22 @@ if valid_rows and valid_cols:
                     'pval': pvals
                 })
                 volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
+                volcano_df['significant'] = volcano_df['pval'] < 0.05
         
-                # Optional: highlight top significant TFs
-                sig_threshold = 0.05
-                volcano_df['significant'] = volcano_df['pval'] < sig_threshold
-                        
-                # Sort TFs by p-value and pick top 20
-                top_tfs = volcano_df.nsmallest(20, 'pval')
-                
+                # Slider: number of top TFs to display
+                top_n = st.slider("Number of top TFs to label", min_value=5, max_value=50, value=20)
+        
+                # Select top N most significant TFs
+                top_tfs = volcano_df.nsmallest(top_n, 'pval').copy()
+        
+                # Format TF names based on species
+                if dataset_choice == "Mouse":
+                    top_tfs['TF_display'] = top_tfs['TF'].str.capitalize()
+                else:  # Human
+                    top_tfs['TF_display'] = top_tfs['TF'].str.upper()
+        
                 # Plot volcano
+                import matplotlib.pyplot as plt
                 fig, ax = plt.subplots(figsize=(8,5))
                 ax.scatter(
                     volcano_df['diff'], 
@@ -296,19 +296,21 @@ if valid_rows and valid_cols:
                     c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
                     alpha=0.7
                 )
-                
-                # Add labels for top 20 TFs
+        
+                # Add labels for top N TFs
                 for _, row in top_tfs.iterrows():
-                    ax.text(row['diff'], row['-log10(pval)'], row['TF'], fontsize=9, ha='right', va='bottom')
-                
+                    ax.text(row['diff'], row['-log10(pval)'], row['TF_display'], 
+                            fontsize=9, ha='right', va='bottom')
+        
                 ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
                 ax.set_ylabel("-log10(p-value)")
                 ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
                 st.pyplot(fig)
-
         
             else:
                 st.info("Please select exactly two clusters to compare.")
+        
+
         
 
         # --- Show cluster assignments ---
