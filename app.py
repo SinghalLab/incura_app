@@ -212,11 +212,20 @@ if valid_rows and valid_cols:
         
         # Compute cluster centroids (average TFBS presence per cluster)
         centroids = df_binary.groupby('cluster').mean()  # <--- removed .drop(columns='cluster')
+
+        # Compute variance of each TF across clusters
+        tf_variance = centroids.var(axis=0)
+        
+        # Select top 20 most variable TFs
+        top_tfs = tf_variance.sort_values(ascending=False).head(20).index
+        
+        # Subset centroids to top TFs
+        centroids_top = centroids[top_tfs]
         
         # Plot heatmap
-        st.subheader("Cluster TFBS Patterns (Visual Fingerprint)")
-        fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
-        sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
+        st.subheader("Cluster TFBS Patterns (Top 20 TFs)")
+        fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(top_tfs))))
+        sns.heatmap(centroids_top.T, cmap="viridis", annot=False, ax=ax)
         ax.set_xlabel("Cluster")
         ax.set_ylabel("TFBS")
         st.pyplot(fig)
