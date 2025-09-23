@@ -230,7 +230,39 @@ if valid_rows and valid_cols:
             ax.set_ylabel("TFBS")
             st.pyplot(fig_heat)
 
+        # -------------------------------
+        # Pairwise Cluster Comparison (Jaccard Similarity)
+        # -------------------------------
+        st.subheader("Pairwise Cluster Jaccard Similarity")
         
+        from sklearn.metrics import jaccard_score
+        
+        # Precompute binary centroids for each cluster (1 if any gene has the TF, 0 otherwise)
+        cluster_binary_centroids = (binary_matrix.groupby(cluster_series).max() > 0).astype(int)
+        
+        # Compute Jaccard similarity between clusters
+        n_clusters_total = len(cluster_binary_centroids)
+        jaccard_matrix = np.zeros((n_clusters_total, n_clusters_total))
+        
+        for i in range(n_clusters_total):
+            for j in range(n_clusters_total):
+                jaccard_matrix[i, j] = jaccard_score(
+                    cluster_binary_centroids.iloc[i], 
+                    cluster_binary_centroids.iloc[j]
+                )
+        
+        jaccard_df = pd.DataFrame(
+            jaccard_matrix, 
+            index=cluster_binary_centroids.index, 
+            columns=cluster_binary_centroids.index
+        )
+        
+        # Plot heatmap
+        fig, ax = plt.subplots(figsize=(6,5))
+        sns.heatmap(jaccard_df, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
+        ax.set_title("Pairwise Jaccard Similarity Between Cluster TFBS Patterns")
+        st.pyplot(fig)
+
 
         # --- Show cluster assignments ---
         clustered_df = pd.DataFrame({
