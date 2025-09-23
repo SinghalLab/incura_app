@@ -28,6 +28,7 @@ with col2:
     "Paste a list of DEGs into the first text field. In the second text field you can either paste all expressed genes in your dataset to automatically "
     "filter for expressed TFs or paste a list of TFs of interest to explore regulatory modules, "
     "visualize gene clusters, and identify enriched TF binding sites.\n\n"
+    "Best performance is reached in a range of 150 - 1500 DEGs. \n\n"
     "**Note:** This implementation of InCURA uses a pre-computed TF binding site matrix "
     "with a fixed background model based on all protein coding genes in the respective organism. For more versatile functionality use the [GitHub version of InCURA](https://github.com/SinghalLab/incura)."
     )
