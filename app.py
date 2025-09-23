@@ -444,7 +444,7 @@ if valid_rows and valid_cols:
         with st.expander("Export PDF Report"):
             if st.button("Generate PDF"):
                 pdf_file = "incura_report.pdf"
-                with mpdf.PdfPages(pdf_file) as pdf:
+                with PdfPages(pdf_file) as pdf:
                     # UMAP
                     pdf.savefig(fig_umap)
                     plt.close(fig_umap)
