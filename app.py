@@ -237,82 +237,135 @@ if valid_rows and valid_cols:
         
         cluster_series = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
 
-        st.subheader("Compare Two Clusters (Volcano Plot)")
+        # -------------------------------
+        # Side-by-side Volcano Plot & TFBS Enrichment
+        # -------------------------------
+        st.subheader("Cluster Comparison & Enrichment")
         
-        with st.expander("Select two clusters to compare"):
-            # Select clusters
-            selected_clusters = st.multiselect(
-                "Select two clusters",
-                options=sorted(set(cluster_labels)),
-                default=sorted(set(cluster_labels))[:2]
-            )
+        # Use two columns
+        col1, col2 = st.columns([1, 1])
         
-            if len(selected_clusters) == 2:
-                clust1, clust2 = selected_clusters
-        
-                # Filter genes
-                genes_clust1 = binary_matrix[cluster_series == clust1]
-                genes_clust2 = binary_matrix[cluster_series == clust2]
-        
-                # Compute TFBS frequency difference
-                freq1 = genes_clust1.mean()
-                freq2 = genes_clust2.mean()
-                diff = freq1 - freq2
-        
-                # Compute p-values
-                from scipy.stats import fisher_exact
-                pvals = []
-                for tf in binary_matrix.columns:
-                    table = [
-                        [genes_clust1[tf].sum(), len(genes_clust1) - genes_clust1[tf].sum()],
-                        [genes_clust2[tf].sum(), len(genes_clust2) - genes_clust2[tf].sum()]
-                    ]
-                    _, p = fisher_exact(table)
-                    pvals.append(p)
-        
-                volcano_df = pd.DataFrame({
-                    'TF': binary_matrix.columns,
-                    'diff': diff.values,
-                    'pval': pvals
-                })
-                volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
-                volcano_df['significant'] = volcano_df['pval'] < 0.05
-        
-                # Slider: number of top TFs to display
-                top_n = st.slider("Number of top TFs to label", min_value=5, max_value=50, value=20)
-        
-                # Select top N most significant TFs
-                top_tfs = volcano_df.nsmallest(top_n, 'pval').copy()
-        
-                # Format TF names based on species
-                if dataset_choice == "Mouse":
-                    top_tfs['TF_display'] = top_tfs['TF'].str.capitalize()
-                else:  # Human
-                    top_tfs['TF_display'] = top_tfs['TF'].str.upper()
-        
-                # Plot volcano
-                import matplotlib.pyplot as plt
-                fig, ax = plt.subplots(figsize=(8,5))
-                ax.scatter(
-                    volcano_df['diff'], 
-                    volcano_df['-log10(pval)'], 
-                    c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
-                    alpha=0.7
+        # --- Volcano plot in left column ---
+        with col1:
+            with st.expander("Volcano Plot: Compare Two Clusters"):
+                selected_clusters = st.multiselect(
+                    "Select two clusters", 
+                    options=sorted(set(cluster_labels)),
+                    default=sorted(set(cluster_labels))[:2]
                 )
+                if len(selected_clusters) == 2:
+                    clust1, clust2 = selected_clusters
         
-                # Add labels for top N TFs
-                for _, row in top_tfs.iterrows():
-                    ax.text(row['diff'], row['-log10(pval)'], row['TF_display'], 
-                            fontsize=9, ha='right', va='bottom')
+                    # Filter genes
+                    genes_clust1 = binary_matrix[cluster_series == clust1]
+                    genes_clust2 = binary_matrix[cluster_series == clust2]
         
-                ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
-                ax.set_ylabel("-log10(p-value)")
-                ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
-                st.pyplot(fig)
+                    # Frequency difference & p-values
+                    freq1 = genes_clust1.mean()
+                    freq2 = genes_clust2.mean()
+                    diff = freq1 - freq2
         
-            else:
-                st.info("Please select exactly two clusters to compare.")
+                    from scipy.stats import fisher_exact
+                    pvals = []
+                    for tf in binary_matrix.columns:
+                        table = [
+                            [genes_clust1[tf].sum(), len(genes_clust1) - genes_clust1[tf].sum()],
+                            [genes_clust2[tf].sum(), len(genes_clust2) - genes_clust2[tf].sum()]
+                        ]
+                        _, p = fisher_exact(table)
+                        pvals.append(p)
         
+                    volcano_df = pd.DataFrame({
+                        'TF': binary_matrix.columns,
+                        'diff': diff.values,
+                        'pval': pvals
+                    })
+                    volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
+                    volcano_df['significant'] = volcano_df['pval'] < 0.05
+        
+                    # Slider: number of top TFs
+                    top_n = st.slider("Number of top TFs to label", min_value=5, max_value=50, value=20)
+                    top_tfs = volcano_df.nsmallest(top_n, 'pval').copy()
+        
+                    # Species formatting
+                    if dataset_choice == "Mouse":
+                        top_tfs['TF_display'] = top_tfs['TF'].str.capitalize()
+                    else:
+                        top_tfs['TF_display'] = top_tfs['TF'].str.upper()
+        
+                    # Plot volcano
+                    import matplotlib.pyplot as plt
+                    fig, ax = plt.subplots(figsize=(6,5))
+                    ax.scatter(
+                        volcano_df['diff'], 
+                        volcano_df['-log10(pval)'], 
+                        c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
+                        alpha=0.7
+                    )
+        
+                    for _, row in top_tfs.iterrows():
+                        ax.text(row['diff'], row['-log10(pval)'], row['TF_display'], fontsize=9, ha='right', va='bottom')
+        
+                    ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1}-{clust2}")
+                    ax.set_ylabel("-log10(p-value)")
+                    ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
+                    st.pyplot(fig)
+                else:
+                    st.info("Select exactly two clusters to compare.")
+        
+        # --- TFBS enrichment heatmap in right column ---
+        with col2:
+            with st.expander("TFBS Enrichment Heatmap per Cluster"):
+
+                st.subheader("Identify Enriched TFBS Driving the Clustering")
+        
+                binary_matrix = count_matrix.astype(bool).astype(int)  # ensure binary
+                cluster_series = pd.Series(cluster_labels, index=count_matrix.index)
+        
+                enrichment_df = tfbs_cluster_enrichment(binary_matrix, cluster_series)
+        
+                if enrichment_df.empty:
+                    st.warning("No significantly enriched TFBS found at the specified threshold.")
+                else:
+                    tfbs_counts = enrichment_df.groupby("TFBS")["Cluster"].nunique()
+                    ubiquitous_tfbs = tfbs_counts[tfbs_counts > 1].index
+                    enrichment_df = enrichment_df[~enrichment_df["TFBS"].isin(ubiquitous_tfbs)]
+        
+                    top_tfbs = (
+                        enrichment_df.groupby("Cluster")
+                        .apply(lambda x: x.nsmallest(10, "p_value"))
+                        .reset_index(drop=True)                        )
+                    enrichment_df = enrichment_df[enrichment_df["TFBS"].isin(top_tfbs["TFBS"])]
+                        
+                    # Format TF names in final enrichment_df before plotting
+                    if dataset_choice == "Mouse":
+                        enrichment_df["TFBS_display"] = enrichment_df["TFBS"].apply(lambda x: x.capitalize())
+                    elif dataset_choice == "Human":
+                        enrichment_df["TFBS_display"] = enrichment_df["TFBS"].apply(lambda x: x.upper())
+                    else:
+                        enrichment_df["TFBS_display"] = enrichment_df["TFBS"]
+
+
+
+                    # Pivot and plot as before
+                    pivot_df = enrichment_df.pivot(index="TFBS_display", columns="Cluster", values="corrected_pval")
+                    pivot_df = pivot_df.sort_values(by=pivot_df.columns.tolist())
+        
+                    fig, ax = plt.subplots(figsize=(6, max(4, 0.3*len(pivot_df))))
+                    import seaborn as sns
+                    sns.heatmap(-np.log10(pivot_df), cmap="viridis", annot=False, ax=ax)
+                    ax.set_title("-log10(corrected p-values) of TFBS enrichment")
+                    ax.set_xlabel("Cluster")
+                    ax.set_ylabel("TFBS")
+                    st.pyplot(fig)
+
+                    csv_enrich = enrichment_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="📥 Download Enrichment Results (CSV)",
+                        data=csv_enrich,
+                        file_name="incura_tfbs_enrichment.csv",
+                        mime="text/csv"
+                    )
 
         
 
@@ -376,58 +429,7 @@ if valid_rows and valid_cols:
             fig.tight_layout()
             st.pyplot(fig)
 
-        # --- Optional: TFBS Enrichment ---
-        st.subheader("Identify Enriched TFBS Driving the Clustering")
-        run_enrichment = st.checkbox("Run TFBS enrichment analysis")
 
-        if run_enrichment:
-            st.write("Running TFBS enrichment analysis per cluster...")
-
-            binary_matrix = count_matrix.astype(bool).astype(int)  # ensure binary
-            cluster_series = pd.Series(cluster_labels, index=count_matrix.index)
-
-            enrichment_df = tfbs_cluster_enrichment(binary_matrix, cluster_series)
-
-            if enrichment_df.empty:
-                st.warning("No significantly enriched TFBS found at the specified threshold.")
-            else:
-                tfbs_counts = enrichment_df.groupby("TFBS")["Cluster"].nunique()
-                ubiquitous_tfbs = tfbs_counts[tfbs_counts > 1].index
-                enrichment_df = enrichment_df[~enrichment_df["TFBS"].isin(ubiquitous_tfbs)]
-
-                top_tfbs = (
-                    enrichment_df.groupby("Cluster")
-                    .apply(lambda x: x.nsmallest(10, "p_value"))
-                    .reset_index(drop=True)
-                )
-                enrichment_df = enrichment_df[enrichment_df["TFBS"].isin(top_tfbs["TFBS"])]
-                
-                # Format TF names in final enrichment_df before plotting
-                if dataset_choice == "Mouse":
-                    enrichment_df["TFBS_display"] = enrichment_df["TFBS"].apply(lambda x: x.capitalize())
-                elif dataset_choice == "Human":
-                    enrichment_df["TFBS_display"] = enrichment_df["TFBS"].apply(lambda x: x.upper())
-                else:
-                    enrichment_df["TFBS_display"] = enrichment_df["TFBS"]
-
-                # Pivot and plot
-                pivot_df = enrichment_df.pivot(index="TFBS_display", columns="Cluster", values="corrected_pval")
-                pivot_df = pivot_df.sort_values(by=pivot_df.columns.tolist())
-
-                fig, ax = plt.subplots(figsize=(5, max(4, 0.3 * len(pivot_df))))
-                sns.heatmap(-np.log10(pivot_df), cmap="viridis", annot=False, ax=ax)
-                ax.set_title("-log10(corrected p-values) of TFBS enrichment")
-                ax.set_xlabel("Cluster", fontsize=14)
-                ax.set_ylabel("TFBS", fontsize=14)
-                st.pyplot(fig)
-
-                csv_enrich = enrichment_df.to_csv(index=False).encode("utf-8")
-                st.download_button(
-                    label="📥 Download Enrichment Results (CSV)",
-                    data=csv_enrich,
-                    file_name="incura_tfbs_enrichment.csv",
-                    mime="text/csv"
-                )
 else:
     st.warning("Please paste at least 50 valid genes and 4 valid TFs.")
 
