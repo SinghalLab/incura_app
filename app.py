@@ -205,143 +205,143 @@ if valid_rows and valid_cols:
         st.pyplot(fig)
 
         # -------------------------------
-# Cluster Analysis & Visualizations
-# -------------------------------
-import matplotlib.backends.backend_pdf as mpdf
-
-# --- Cached computations ---
-@st.cache_data
-def compute_cluster_centroids(binary_matrix, cluster_labels):
-    df = binary_matrix.copy()
-    df['cluster'] = cluster_labels
-    centroids = df.groupby('cluster').mean().drop(columns='cluster')
-    return centroids
-
-@st.cache_data
-def compute_jaccard_similarity(centroids):
-    n = len(centroids)
-    sim_matrix = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            sim_matrix[i, j] = jaccard_score(centroids.iloc[i]>0, centroids.iloc[j]>0)
-    return pd.DataFrame(sim_matrix, index=centroids.index, columns=centroids.index)
-
-binary_matrix = count_matrix.astype(bool).astype(int)
-cluster_series = pd.Series(cluster_labels, index=count_matrix.index)
-centroids = compute_cluster_centroids(binary_matrix, cluster_labels)
-jaccard_matrix = compute_jaccard_similarity(centroids)
-
-# -------------------------------
-# 1. Cluster centroid heatmap
-# -------------------------------
-st.subheader("Cluster TFBS Patterns (Visual Fingerprint)")
-fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
-sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
-ax.set_xlabel("Cluster")
-ax.set_ylabel("TFBS")
-st.pyplot(fig)
-
-# -------------------------------
-# 2. Optional gene-level heatmaps
-# -------------------------------
-with st.expander("Show gene-level TFBS heatmaps per cluster"):
-    selected_cluster = st.selectbox("Select cluster", options=sorted(centroids.index))
-    cluster_genes = binary_matrix[cluster_series == selected_cluster]
-    fig, ax = plt.subplots(figsize=(8, max(4, 0.15*len(cluster_genes))))
-    sns.heatmap(cluster_genes, cmap="viridis", cbar=True, ax=ax)
-    ax.set_title(f"Cluster {selected_cluster} Gene-Level TFBS Patterns")
-    st.pyplot(fig)
-
-# -------------------------------
-# 3. Pairwise cluster Jaccard similarity
-# -------------------------------
-st.subheader("Pairwise Cluster Jaccard Similarity")
-fig, ax = plt.subplots(figsize=(6, 5))
-sns.heatmap(jaccard_matrix, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
-ax.set_title("Jaccard Similarity Between Cluster TFBS Profiles")
-st.pyplot(fig)
-
-# -------------------------------
-# 4. Volcano plot for two clusters
-# -------------------------------
-with st.expander("Compare Two Clusters (Volcano plot)"):
-    clust1, clust2 = st.multiselect("Select two clusters", options=sorted(centroids.index), default=sorted(centroids.index)[:2])
-    if len([clust1, clust2]) == 2:
-        df1 = binary_matrix[cluster_series == clust1].mean()
-        df2 = binary_matrix[cluster_series == clust2].mean()
-        diff = df1 - df2
-        # p-values from Fisher exact
-        pvals = []
-        for tf in binary_matrix.columns:
-            table = [
-                [binary_matrix.loc[cluster_series==clust1, tf].sum(), (cluster_series==clust1).sum() - binary_matrix.loc[cluster_series==clust1, tf].sum()],
-                [binary_matrix.loc[cluster_series==clust2, tf].sum(), (cluster_series==clust2).sum() - binary_matrix.loc[cluster_series==clust2, tf].sum()]
-            ]
-            _, p = fisher_exact(table)
-            pvals.append(p)
-        volcano_df = pd.DataFrame({'TF': binary_matrix.columns, 'diff': diff.values, 'pval': pvals})
-        volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
-        fig, ax = plt.subplots(figsize=(8,5))
-        ax.scatter(volcano_df['diff'], volcano_df['-log10(pval)'])
-        ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
-        ax.set_ylabel("-log10(p-value)")
-        ax.set_title("Volcano Plot of TFBS Differences")
+        # Cluster Analysis & Visualizations
+        # -------------------------------
+        import matplotlib.backends.backend_pdf as mpdf
+        
+        # --- Cached computations ---
+        @st.cache_data
+        def compute_cluster_centroids(binary_matrix, cluster_labels):
+            df = binary_matrix.copy()
+            df['cluster'] = cluster_labels
+            centroids = df.groupby('cluster').mean().drop(columns='cluster')
+            return centroids
+        
+        @st.cache_data
+        def compute_jaccard_similarity(centroids):
+            n = len(centroids)
+            sim_matrix = np.zeros((n, n))
+            for i in range(n):
+                for j in range(n):
+                    sim_matrix[i, j] = jaccard_score(centroids.iloc[i]>0, centroids.iloc[j]>0)
+            return pd.DataFrame(sim_matrix, index=centroids.index, columns=centroids.index)
+        
+        binary_matrix = count_matrix.astype(bool).astype(int)
+        cluster_series = pd.Series(cluster_labels, index=count_matrix.index)
+        centroids = compute_cluster_centroids(binary_matrix, cluster_labels)
+        jaccard_matrix = compute_jaccard_similarity(centroids)
+        
+        # -------------------------------
+        # 1. Cluster centroid heatmap
+        # -------------------------------
+        st.subheader("Cluster TFBS Patterns (Visual Fingerprint)")
+        fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
+        sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
+        ax.set_xlabel("Cluster")
+        ax.set_ylabel("TFBS")
         st.pyplot(fig)
-
-# -------------------------------
-# 5. TFBS sparsity & enrichment consistency
-# -------------------------------
-st.subheader("TFBS Sparsity & Enrichment Consistency")
-sparsity = binary_matrix.sum()/len(binary_matrix)
-fig, ax = plt.subplots(figsize=(10,4))
-sns.barplot(x=sparsity.index, y=sparsity.values, ax=ax)
-ax.set_ylabel("Fraction of Genes with TFBS")
-ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-st.pyplot(fig)
-
-# Optional: enrichment consistency from your enrichment_df if available
-if 'enrichment_df' in locals() and not enrichment_df.empty:
-    consistency = enrichment_df.groupby("TFBS")["Cluster"].nunique()
-    fig, ax = plt.subplots(figsize=(10,4))
-    sns.barplot(x=consistency.index, y=consistency.values, ax=ax)
-    ax.set_ylabel("Number of Clusters TFBS is enriched in")
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-    st.pyplot(fig)
-
-# -------------------------------
-# 6. PDF Report Export
-# -------------------------------
-with st.expander("Export PDF Report"):
-    if st.button("Generate PDF"):
-        pdf_file = "incura_report.pdf"
-        with mpdf.PdfPages(pdf_file) as pdf:
-            # UMAP
-            fig_umap, ax = plt.subplots()
-            scatter = ax.scatter(embedding[:,0], embedding[:,1], c=cluster_labels, cmap='tab10', s=50)
-            ax.set_title("UMAP Projection with Clusters")
-            pdf.savefig(fig_umap)
-            plt.close(fig_umap)
-            # Cluster centroid heatmap
-            fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
-            sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
-            pdf.savefig(fig)
-            plt.close(fig)
-            # Jaccard
-            fig, ax = plt.subplots(figsize=(6,5))
-            sns.heatmap(jaccard_matrix, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
-            pdf.savefig(fig)
-            plt.close(fig)
-            # TFBS sparsity
+        
+        # -------------------------------
+        # 2. Optional gene-level heatmaps
+        # -------------------------------
+        with st.expander("Show gene-level TFBS heatmaps per cluster"):
+            selected_cluster = st.selectbox("Select cluster", options=sorted(centroids.index))
+            cluster_genes = binary_matrix[cluster_series == selected_cluster]
+            fig, ax = plt.subplots(figsize=(8, max(4, 0.15*len(cluster_genes))))
+            sns.heatmap(cluster_genes, cmap="viridis", cbar=True, ax=ax)
+            ax.set_title(f"Cluster {selected_cluster} Gene-Level TFBS Patterns")
+            st.pyplot(fig)
+        
+        # -------------------------------
+        # 3. Pairwise cluster Jaccard similarity
+        # -------------------------------
+        st.subheader("Pairwise Cluster Jaccard Similarity")
+        fig, ax = plt.subplots(figsize=(6, 5))
+        sns.heatmap(jaccard_matrix, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
+        ax.set_title("Jaccard Similarity Between Cluster TFBS Profiles")
+        st.pyplot(fig)
+        
+        # -------------------------------
+        # 4. Volcano plot for two clusters
+        # -------------------------------
+        with st.expander("Compare Two Clusters (Volcano plot)"):
+            clust1, clust2 = st.multiselect("Select two clusters", options=sorted(centroids.index), default=sorted(centroids.index)[:2])
+            if len([clust1, clust2]) == 2:
+                df1 = binary_matrix[cluster_series == clust1].mean()
+                df2 = binary_matrix[cluster_series == clust2].mean()
+                diff = df1 - df2
+                # p-values from Fisher exact
+                pvals = []
+                for tf in binary_matrix.columns:
+                    table = [
+                        [binary_matrix.loc[cluster_series==clust1, tf].sum(), (cluster_series==clust1).sum() - binary_matrix.loc[cluster_series==clust1, tf].sum()],
+                        [binary_matrix.loc[cluster_series==clust2, tf].sum(), (cluster_series==clust2).sum() - binary_matrix.loc[cluster_series==clust2, tf].sum()]
+                    ]
+                    _, p = fisher_exact(table)
+                    pvals.append(p)
+                volcano_df = pd.DataFrame({'TF': binary_matrix.columns, 'diff': diff.values, 'pval': pvals})
+                volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
+                fig, ax = plt.subplots(figsize=(8,5))
+                ax.scatter(volcano_df['diff'], volcano_df['-log10(pval)'])
+                ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
+                ax.set_ylabel("-log10(p-value)")
+                ax.set_title("Volcano Plot of TFBS Differences")
+                st.pyplot(fig)
+        
+        # -------------------------------
+        # 5. TFBS sparsity & enrichment consistency
+        # -------------------------------
+        st.subheader("TFBS Sparsity & Enrichment Consistency")
+        sparsity = binary_matrix.sum()/len(binary_matrix)
+        fig, ax = plt.subplots(figsize=(10,4))
+        sns.barplot(x=sparsity.index, y=sparsity.values, ax=ax)
+        ax.set_ylabel("Fraction of Genes with TFBS")
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+        st.pyplot(fig)
+        
+        # Optional: enrichment consistency from your enrichment_df if available
+        if 'enrichment_df' in locals() and not enrichment_df.empty:
+            consistency = enrichment_df.groupby("TFBS")["Cluster"].nunique()
             fig, ax = plt.subplots(figsize=(10,4))
-            sns.barplot(x=sparsity.index, y=sparsity.values, ax=ax)
-            ax.set_ylabel("Fraction of Genes with TFBS")
+            sns.barplot(x=consistency.index, y=consistency.values, ax=ax)
+            ax.set_ylabel("Number of Clusters TFBS is enriched in")
             ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
-            pdf.savefig(fig)
-            plt.close(fig)
-        st.success(f"PDF report saved as {pdf_file}")
-        with open(pdf_file, "rb") as f:
-            st.download_button("Download PDF report", data=f, file_name=pdf_file)
-
+            st.pyplot(fig)
+        
+        # -------------------------------
+        # 6. PDF Report Export
+        # -------------------------------
+        with st.expander("Export PDF Report"):
+            if st.button("Generate PDF"):
+                pdf_file = "incura_report.pdf"
+                with mpdf.PdfPages(pdf_file) as pdf:
+                    # UMAP
+                    fig_umap, ax = plt.subplots()
+                    scatter = ax.scatter(embedding[:,0], embedding[:,1], c=cluster_labels, cmap='tab10', s=50)
+                    ax.set_title("UMAP Projection with Clusters")
+                    pdf.savefig(fig_umap)
+                    plt.close(fig_umap)
+                    # Cluster centroid heatmap
+                    fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
+                    sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
+                    pdf.savefig(fig)
+                    plt.close(fig)
+                    # Jaccard
+                    fig, ax = plt.subplots(figsize=(6,5))
+                    sns.heatmap(jaccard_matrix, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
+                    pdf.savefig(fig)
+                    plt.close(fig)
+                    # TFBS sparsity
+                    fig, ax = plt.subplots(figsize=(10,4))
+                    sns.barplot(x=sparsity.index, y=sparsity.values, ax=ax)
+                    ax.set_ylabel("Fraction of Genes with TFBS")
+                    ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
+                    pdf.savefig(fig)
+                    plt.close(fig)
+                st.success(f"PDF report saved as {pdf_file}")
+                with open(pdf_file, "rb") as f:
+                    st.download_button("Download PDF report", data=f, file_name=pdf_file)
+        
 
 
         # --- Show cluster assignments ---
