@@ -206,6 +206,12 @@ if valid_rows and valid_cols:
         # Subset centroids to top TFs
         centroids_top = centroids[top_tfs]
 
+        # Format TF names based on species
+        if dataset_choice == "Mouse":
+            centroids_top.columns = [tf.capitalize() for tf in centroids_top.columns]
+        else:  # Human
+            centroids_top.columns = [tf.upper() for tf in centroids_top.columns]
+
         # --- Plot side by side ---
         # Create two columns: UMAP (left) and Heatmap (right)
         col1, col2 = st.columns([1, 1])  # equal width, you can adjust
