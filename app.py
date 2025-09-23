@@ -208,9 +208,9 @@ if valid_rows and valid_cols:
 
             # Capitalise gene/TF names if desired
         if dataset_choice == "Mouse":
-            centroids_top["TFBS"] = centroids_top["TFBS"].str.capitalize()
+            centroids_top.T["TFBS"] = centroids_top.T["TFBS"].str.capitalize()
         elif dataset_choice == "Human":
-            centroids_top["TFBS"] = centroids_top["TFBS"].str.upper()
+            centroids_top.T["TFBS"] = centroids_top.T["TFBS"].str.upper()
 
         
         # --- Plot side by side ---
