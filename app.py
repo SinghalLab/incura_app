@@ -233,6 +233,14 @@ if valid_rows and valid_cols:
         # -------------------------------
         # Compare Two Clusters (Volcano Plot)
         # -------------------------------
+        
+        # Convert the filtered count matrix to binary (presence/absence of TFBS)
+        binary_matrix = count_matrix.astype(bool).astype(int)
+        
+        # Create a Pandas Series of cluster labels aligned to the binary_matrix
+        cluster_series = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
+
+
         st.subheader("Compare Two Clusters (Volcano Plot)")
         
         with st.expander("Select two clusters to compare"):
