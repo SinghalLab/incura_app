@@ -233,6 +233,11 @@ if valid_rows and valid_cols:
         # -------------------------------
         # Pairwise Cluster Comparison (Jaccard Similarity)
         # -------------------------------
+        cluster_series_aligned = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
+        
+        df_binary = binary_matrix.copy()
+        df_binary['cluster'] = cluster_series_aligned
+
         st.subheader("Pairwise Cluster Jaccard Similarity")
         
         from sklearn.metrics import jaccard_score
