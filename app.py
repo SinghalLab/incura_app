@@ -29,6 +29,7 @@ with col2:
     "filter for expressed TFs or paste a list of TFs of interest to explore regulatory modules, "
     "visualize gene clusters, and identify enriched TF binding sites.\n\n"
     "Best performance is reached in a range of 150 - 1500 DEGs. \n\n"
+    "If you are unsure about the number of clusters please run the k-means performance metrics at the bottom of the page. \n\n"
     "**Note:** This implementation of InCURA uses a pre-computed TF binding site matrix "
     "with a fixed background model based on all protein coding genes in the respective organism. For more versatile functionality use the [GitHub version of InCURA](https://github.com/SinghalLab/incura)."
     )
@@ -205,6 +206,13 @@ if valid_rows and valid_cols:
         # Subset centroids to top TFs
         centroids_top = centroids[top_tfs]
 
+            # Capitalise gene/TF names if desired
+        if dataset_choice == "Mouse":
+            centroids["top_tfs"] = centroids["top_tfs"].str.capitalize()
+        elif dataset_choice == "Human":
+            centroids["top_tfs"] = centroids["top_tfs"].str.upper()
+
+        
         # --- Plot side by side ---
         # Create two columns: UMAP (left) and Heatmap (right)
         col1, col2 = st.columns([1, 1])  # equal width, you can adjust
