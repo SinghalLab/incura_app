@@ -317,7 +317,7 @@ if valid_rows and valid_cols:
                     mime="text/csv"
                 )
 else:
-    st.warning("Please paste valid gene and TF names.")
+    st.warning("Please paste at least 50 valid genes and 4 valid TF.")
 
 st.markdown(
     """
