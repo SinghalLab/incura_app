@@ -233,19 +233,15 @@ if valid_rows and valid_cols:
         # -------------------------------
         # Pairwise Cluster Comparison (Jaccard Similarity)
         # -------------------------------
+            st.subheader("Pairwise Cluster Jaccard Similarity")
+        
+        from sklearn.metrics import jaccard_score
         cluster_series_aligned = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
         
         df_binary = binary_matrix.copy()
         df_binary['cluster'] = cluster_series_aligned
 
-        st.subheader("Pairwise Cluster Jaccard Similarity")
-        
-        from sklearn.metrics import jaccard_score
-        
-        # Add cluster labels as a column
-        df_binary = binary_matrix.copy()
-        df_binary['cluster'] = cluster_series
-        
+
         # Compute binary centroid per cluster: 1 if any gene in cluster has TFBS
         cluster_binary_centroids = (df_binary.groupby('cluster').max() > 0).astype(int)
         
