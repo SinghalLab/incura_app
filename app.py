@@ -217,7 +217,7 @@ if valid_rows and valid_cols:
         col1, col2 = st.columns([1, 1])  # equal width, you can adjust
         
         with col1:
-            st.subheader("UMAP Projection with Clusters")
+            st.subheader("UMAP Projection of Clusters")
             fig_umap, ax = plt.subplots(figsize=(5, 4))  # smaller figure
             scatter = ax.scatter(
                 embedding[:, 0], embedding[:, 1],
@@ -230,7 +230,7 @@ if valid_rows and valid_cols:
             st.pyplot(fig_umap)
         
         with col2:
-            st.subheader("Cluster TFBS Patterns (Top 20 TFs)")
+            st.subheader("Regulatory Fingerprint: Top 20 Most Variable TFBS")
             fig_heat, ax = plt.subplots(figsize=(5, 4))  # smaller figure
             sns.heatmap(centroids_top.T, cmap="viridis", annot=False, ax=ax)
             ax.set_xlabel("Cluster")
@@ -254,7 +254,7 @@ if valid_rows and valid_cols:
         
         # --- Volcano plot in left column ---
         with col1:
-            with st.expander("Volcano Plot: Compare Two Clusters"):
+            with st.expander("Compare TFBS Profiles Between Two Clusters"):
                 selected_clusters = st.multiselect(
                     "Select two clusters", 
                     options=sorted(set(cluster_labels)),
@@ -322,7 +322,7 @@ if valid_rows and valid_cols:
         
         # --- TFBS enrichment heatmap in right column ---
         with col2:
-            with st.expander("TFBS Enrichment Heatmap per Cluster"):
+            with st.expander("TFBS Enrichment per Cluster"):
 
                 st.subheader("Identify Enriched TFBS Driving the Clustering")
         
