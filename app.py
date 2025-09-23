@@ -204,17 +204,16 @@ if valid_rows and valid_cols:
         
         st.pyplot(fig)
 
-        # --- Convert to binary ---
         binary_matrix = count_matrix.astype(bool).astype(int)
         
         # Create a DataFrame for easier grouping
         df_binary = binary_matrix.copy()
         df_binary['cluster'] = cluster_labels
         
-        # --- Compute cluster centroids (average TFBS presence per cluster) ---
-        centroids = df_binary.groupby('cluster').mean().drop(columns='cluster')
+        # Compute cluster centroids (average TFBS presence per cluster)
+        centroids = df_binary.groupby('cluster').mean()  # <--- removed .drop(columns='cluster')
         
-        # --- Plot heatmap ---
+        # Plot heatmap
         st.subheader("Cluster TFBS Patterns (Visual Fingerprint)")
         fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(centroids.columns))))
         sns.heatmap(centroids.T, cmap="viridis", annot=False, ax=ax)
