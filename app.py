@@ -231,44 +231,66 @@ if valid_rows and valid_cols:
             st.pyplot(fig_heat)
 
         # -------------------------------
-        # Pairwise Cluster Comparison (Jaccard Similarity)
+        # Compare Two Clusters (Volcano Plot)
         # -------------------------------
-            st.subheader("Pairwise Cluster Jaccard Similarity")
+        st.subheader("Compare Two Clusters (Volcano Plot)")
         
-        from sklearn.metrics import jaccard_score
-        cluster_series_aligned = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
+        with st.expander("Select two clusters to compare"):
+            # Let user select two clusters
+            selected_clusters = st.multiselect(
+                "Select two clusters",
+                options=sorted(set(cluster_labels)),
+                default=sorted(set(cluster_labels))[:2]
+            )
         
-        df_binary = binary_matrix.copy()
-        df_binary['cluster'] = cluster_series_aligned
-
-
-        # Compute binary centroid per cluster: 1 if any gene in cluster has TFBS
-        cluster_binary_centroids = (df_binary.groupby('cluster').max() > 0).astype(int)
+            if len(selected_clusters) == 2:
+                clust1, clust2 = selected_clusters
         
-        # Compute Jaccard similarity between clusters
-        n_clusters_total = len(cluster_binary_centroids)
-        jaccard_matrix = np.zeros((n_clusters_total, n_clusters_total))
+                # Filter genes in each cluster
+                genes_clust1 = binary_matrix[cluster_series == clust1]
+                genes_clust2 = binary_matrix[cluster_series == clust2]
         
-        for i in range(n_clusters_total):
-            for j in range(n_clusters_total):
-                jaccard_matrix[i, j] = jaccard_score(
-                    cluster_binary_centroids.iloc[i], 
-                    cluster_binary_centroids.iloc[j]
-                )
+                # Compute TFBS frequency (mean presence) in each cluster
+                freq1 = genes_clust1.mean()
+                freq2 = genes_clust2.mean()
+                diff = freq1 - freq2
         
-        jaccard_df = pd.DataFrame(
-            jaccard_matrix, 
-            index=cluster_binary_centroids.index, 
-            columns=cluster_binary_centroids.index
-        )
+                # Compute p-values using Fisher exact test per TF
+                from scipy.stats import fisher_exact
+                pvals = []
+                for tf in binary_matrix.columns:
+                    table = [
+                        [genes_clust1[tf].sum(), len(genes_clust1) - genes_clust1[tf].sum()],
+                        [genes_clust2[tf].sum(), len(genes_clust2) - genes_clust2[tf].sum()]
+                    ]
+                    _, p = fisher_exact(table)
+                    pvals.append(p)
         
-        # Plot heatmap
-        fig, ax = plt.subplots(figsize=(6,5))
-        sns.heatmap(jaccard_df, cmap="coolwarm", annot=True, fmt=".2f", ax=ax)
-        ax.set_title("Pairwise Jaccard Similarity Between Cluster TFBS Patterns")
-        st.pyplot(fig)
-
-
+                volcano_df = pd.DataFrame({
+                    'TF': binary_matrix.columns,
+                    'diff': diff.values,
+                    'pval': pvals
+                })
+                volcano_df['-log10(pval)'] = -np.log10(volcano_df['pval'])
+        
+                # Optional: highlight top significant TFs
+                sig_threshold = 0.05
+                volcano_df['significant'] = volcano_df['pval'] < sig_threshold
+        
+                # Plot volcano
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(figsize=(8,5))
+                ax.scatter(volcano_df['diff'], volcano_df['-log10(pval)'], 
+                           c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
+                           alpha=0.7)
+                ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
+                ax.set_ylabel("-log10(p-value)")
+                ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
+                st.pyplot(fig)
+        
+            else:
+                st.info("Please select exactly two clusters to compare.")
+        
 
         # --- Show cluster assignments ---
         clustered_df = pd.DataFrame({
