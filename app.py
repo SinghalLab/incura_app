@@ -186,24 +186,7 @@ if valid_rows and valid_cols:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
         cluster_labels = kmeans.fit_predict(count_matrix.values)
 
-        # --- UMAP with Clusters ---
-        fig, ax = plt.subplots(figsize=(6, 4))
-        scatter = ax.scatter(
-            embedding[:, 0], embedding[:, 1],
-            c=cluster_labels, cmap='tab10', s=50
-        )
-        
-        ax.set_title("UMAP Projection with KMeans Clusters")
-        ax.set_xlabel("UMAP 1")
-        ax.set_ylabel("UMAP 2")
-        
-        # Add legend
-        handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
-        ax.legend(handles, [f"Cluster {i}" for i in range(n_clusters)],
-                  title="Clusters", bbox_to_anchor=(1.05, 1), loc="upper left")
-        
-        st.pyplot(fig)
-
+        # --- HeatMAP ---
         binary_matrix = count_matrix.astype(bool).astype(int)
         
         # Create a DataFrame for easier grouping
@@ -221,15 +204,33 @@ if valid_rows and valid_cols:
         
         # Subset centroids to top TFs
         centroids_top = centroids[top_tfs]
-        
-        # Plot heatmap
-        st.subheader("Cluster TFBS Patterns (Top 20 TFs)")
-        fig, ax = plt.subplots(figsize=(8, max(4, 0.25*len(top_tfs))))
-        sns.heatmap(centroids_top.T, cmap="viridis", annot=False, ax=ax)
-        ax.set_xlabel("Cluster")
-        ax.set_ylabel("TFBS")
-        st.pyplot(fig)
 
+        # --- Plot side by side ---
+        # Create two columns: UMAP (left) and Heatmap (right)
+        col1, col2 = st.columns([1, 1])  # equal width, you can adjust
+        
+        with col1:
+            st.subheader("UMAP Projection with Clusters")
+            fig_umap, ax = plt.subplots(figsize=(5, 4))  # smaller figure
+            scatter = ax.scatter(
+                embedding[:, 0], embedding[:, 1],
+                c=cluster_labels, cmap='tab10', s=40  # smaller point size
+            )
+            ax.set_xlabel("UMAP 1")
+            ax.set_ylabel("UMAP 2")
+            handles, labels = scatter.legend_elements(prop="colors", alpha=0.6)
+            ax.legend(handles, [f"Cluster {i}" for i in range(n_clusters)], title="Clusters")
+            st.pyplot(fig_umap)
+        
+        with col2:
+            st.subheader("Cluster TFBS Patterns (Top 20 TFs)")
+            fig_heat, ax = plt.subplots(figsize=(5, 4))  # smaller figure
+            sns.heatmap(centroids_top.T, cmap="viridis", annot=False, ax=ax)
+            ax.set_xlabel("Cluster")
+            ax.set_ylabel("TFBS")
+            st.pyplot(fig_heat)
+
+        
 
         # --- Show cluster assignments ---
         clustered_df = pd.DataFrame({
