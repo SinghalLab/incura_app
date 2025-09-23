@@ -93,13 +93,13 @@ else:
     st.subheader("Filtering for Differentially Expressed Genes")
     rows_text = st.text_area(
         "Paste gene names here (one gene per line):", 
-        placeholder="Gene1\nGene2\nGene3"
+        placeholder="DEG1\nDEG2\nDEG3"
     )
 
     # --- TF Input ---
     st.subheader("Filtering for Transcription Factors")
     cols_text = st.text_area(
-        "Paste TF names here (or all expressed genes, one per line):", 
+        "Paste list of **all expressed genes** or **TFs of interest** here (one per line):", 
         placeholder="TF1\nTF2\nTF3"
     )
 
