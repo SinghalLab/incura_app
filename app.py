@@ -233,7 +233,10 @@ if valid_rows and valid_cols:
         # -------------------------------
         # Volcano plot with dynamic top TF labels
         # -------------------------------
+        binary_matrix = count_matrix.astype(bool).astype(int)
         
+        cluster_series = pd.Series(cluster_labels, index=binary_matrix.index, name='cluster')
+
         st.subheader("Compare Two Clusters (Volcano Plot)")
         
         with st.expander("Select two clusters to compare"):
