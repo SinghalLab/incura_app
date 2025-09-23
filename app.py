@@ -284,17 +284,28 @@ if valid_rows and valid_cols:
                 # Optional: highlight top significant TFs
                 sig_threshold = 0.05
                 volcano_df['significant'] = volcano_df['pval'] < sig_threshold
-        
+                        
+                # Sort TFs by p-value and pick top 20
+                top_tfs = volcano_df.nsmallest(20, 'pval')
+                
                 # Plot volcano
-                import matplotlib.pyplot as plt
                 fig, ax = plt.subplots(figsize=(8,5))
-                ax.scatter(volcano_df['diff'], volcano_df['-log10(pval)'], 
-                           c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
-                           alpha=0.7)
+                ax.scatter(
+                    volcano_df['diff'], 
+                    volcano_df['-log10(pval)'], 
+                    c=volcano_df['significant'].map({True: 'red', False: 'gray'}),
+                    alpha=0.7
+                )
+                
+                # Add labels for top 20 TFs
+                for _, row in top_tfs.iterrows():
+                    ax.text(row['diff'], row['-log10(pval)'], row['TF'], fontsize=9, ha='right', va='bottom')
+                
                 ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1} - Cluster {clust2}")
                 ax.set_ylabel("-log10(p-value)")
                 ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
                 st.pyplot(fig)
+
         
             else:
                 st.info("Please select exactly two clusters to compare.")
