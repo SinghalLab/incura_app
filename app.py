@@ -24,8 +24,9 @@ with col2:
     st.title("Integrative Gene Clustering based on Transcription Factor Binding Sites")
     
     st.markdown(
-    "InCURA enables clustering of differentially expressed genes (DEGs) based on shared transcription factor binding patterns. "
-    "Paste a list of DEGs and either all expressed genes or a list of transcription factors of interest to explore regulatory modules, "
+    "InCURA enables clustering of differentially expressed genes (DEGs) based on shared transcription factor (TF) binding patterns. "
+    "Paste a list of DEGs into the first text field. In the second text field you can either paste all expressed genes in your dataset to automatically "
+    "filter for expressed TFs or paste a list of TFs of interest to explore regulatory modules, "
     "visualize gene clusters, and identify enriched TF binding sites.\n\n"
     "**Note:** This implementation of InCURA uses a pre-computed TF binding site matrix "
     "with a fixed background model based on all protein coding genes in the respective organism. For more versatile functionality use the [GitHub version of InCURA](https://github.com/SinghalLab/incura)."
@@ -100,7 +101,7 @@ else:
     st.subheader("Filtering for Transcription Factors")
     cols_text = st.text_area(
         "Paste list of **all expressed genes** or **TFs of interest** here (one per line):", 
-        placeholder="TF1\nTF2\nTF3"
+        placeholder="Gene1\nGene2\nGene3"
     )
 
 
