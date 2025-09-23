@@ -24,7 +24,7 @@ with col2:
     st.title("Integrative Gene Clustering based on Transcription Factor Binding Sites")
     
     st.markdown(
-    "InCURA enables clustering of differentially expressed genes (DEGs) based on shared transcription factor (TF) binding patterns. "
+    "InCURA enables clustering of differentially expressed genes (DEGs) based on shared transcription factor (TF) binding patterns. \n\n"
     "Paste a list of DEGs into the first text field. In the second text field you can either paste all expressed genes in your dataset to automatically "
     "filter for expressed TFs or paste a list of TFs of interest to explore regulatory modules, "
     "visualize gene clusters, and identify enriched TF binding sites.\n\n"
