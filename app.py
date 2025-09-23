@@ -302,7 +302,7 @@ if valid_rows and valid_cols:
         
                     # Plot volcano
                     import matplotlib.pyplot as plt
-                    fig, ax = plt.subplots(figsize=(6,5))
+                    fig_volcano, ax = plt.subplots(figsize=(6,5))
                     ax.scatter(
                         volcano_df['diff'], 
                         volcano_df['-log10(pval)'], 
@@ -316,7 +316,7 @@ if valid_rows and valid_cols:
                     ax.set_xlabel(f"TFBS Frequency Difference: Cluster {clust1}-{clust2}")
                     ax.set_ylabel("-log10(p-value)")
                     ax.set_title(f"Volcano Plot: Cluster {clust1} vs Cluster {clust2}")
-                    st.pyplot(fig)
+                    st.pyplot(fig_volcano)
                 else:
                     st.info("Select exactly two clusters to compare.")
         
@@ -358,13 +358,13 @@ if valid_rows and valid_cols:
                     pivot_df = enrichment_df.pivot(index="TFBS_display", columns="Cluster", values="corrected_pval")
                     pivot_df = pivot_df.sort_values(by=pivot_df.columns.tolist())
         
-                    fig, ax = plt.subplots(figsize=(6, max(4, 0.3*len(pivot_df))))
+                    fig_enr, ax = plt.subplots(figsize=(6, max(4, 0.3*len(pivot_df))))
                     import seaborn as sns
                     sns.heatmap(-np.log10(pivot_df), cmap="viridis", annot=False, ax=ax)
                     ax.set_title("-log10(corrected p-values) of TFBS enrichment")
                     ax.set_xlabel("Cluster")
                     ax.set_ylabel("TFBS")
-                    st.pyplot(fig)
+                    st.pyplot(fig_enr)
 
                     csv_enrich = enrichment_df.to_csv(index=False).encode("utf-8")
                     st.download_button(
@@ -435,6 +435,31 @@ if valid_rows and valid_cols:
             plt.title('K-Means Performance Metrics', fontsize=16)
             fig.tight_layout()
             st.pyplot(fig)
+
+
+        # -------------------------------
+        # 6. PDF Report Export
+        # -------------------------------
+        with st.expander("Export PDF Report"):
+            if st.button("Generate PDF"):
+                pdf_file = "incura_report.pdf"
+                with mpdf.PdfPages(pdf_file) as pdf:
+                    # UMAP
+                    pdf.savefig(fig_umap)
+                    plt.close(fig_umap)
+                    # Cluster centroid heatmap
+                    pdf.savefig(fig_heat)
+                    plt.close(fig_heat)
+                    # Volcano
+                    pdf.savefig(fig_volcano)
+                    plt.close(fig_volcano)
+                    # TFBS enrichment
+                    fig, ax = plt.subplots(figsize=(10,4))
+                    pdf.savefig(fig_enr)
+                    plt.close(fig_enr)
+                st.success(f"PDF report saved as {pdf_file}")
+                with open(pdf_file, "rb") as f:
+                    st.download_button("Download PDF report", data=f, file_name=pdf_file)
 
 
 else:
