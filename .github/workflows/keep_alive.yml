@@ -4,8 +4,10 @@ name: Keep InCURA Alive (Weekdays)
 on:
   schedule:
     - cron: '0 3 * * *'   # 05:00 UTC -> 09:00 Europe/Berlin (CEST = UTC+2)
-    #- cron: '0 11 * * *'  # 13:00 UTC -> 13:00 Europe/Berlin (CEST)
-    #- cron: '0 19 * * *'  # 21:00 UTC -> 17:00 Europe/Berlin (CEST)
+    - cron: '0 9 * * *'  # 11:00 UTC -> 13:00 Europe/Berlin (CEST)
+    - cron: '0 15 * * *'  # 19:00 UTC -> 17:00 Europe/Berlin (CEST)
+    - cron: '0 21 * * *' 
+    
   workflow_dispatch:       # allows manual runs from the Actions tab
 
 # Ensure the workflow has permission to push commits
