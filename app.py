@@ -94,7 +94,7 @@ if st.session_state.use_example:
         cols_text = f.read()
 else:
     # --- Gene Input ---
-    st.subheader("Filtering for Differentiall Features")
+    st.subheader("Filtering for Differential Features")
     rows_text = st.text_area(
         "Paste gene names here (one gene per line):", 
         placeholder="Gene1\nGene2\nGene3"
